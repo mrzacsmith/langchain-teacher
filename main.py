@@ -3,13 +3,12 @@ from langchain.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage, AIMessage
 import streamlit as st
 from langsmith import Client
+
 client = Client()
-
-
 
 st.set_page_config(page_title="LangChain: Getting Started Class", page_icon="🦜")
 st.title("🦜 LangChain: Getting Started Class")
-button_css =""".stButton>button {
+button_css = """.stButton>button {
     color: #4F8BF9;
     border-radius: 50%;
     height: 2em;
@@ -28,11 +27,10 @@ class StreamHandler(BaseCallbackHandler):
         self.text += token
         self.container.markdown(self.text)
 
+
 with open("guide.txt", "r") as f:
     guide = f.read()
 from langchain.chat_models import ChatOpenAI
-
-
 
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder, HumanMessagePromptTemplate
 from langchain.schema import SystemMessage
@@ -46,15 +44,20 @@ When they have finished the guide, congragulate them and tell them to move onto 
 -----------------
 {content}""".format(content=guide)
 
-prompt_template = ChatPromptTemplate(messages = [SystemMessage(content=template), MessagesPlaceholder(variable_name="chat_history"), HumanMessagePromptTemplate.from_template("{input}")])
+prompt_template = ChatPromptTemplate(
+    messages=[SystemMessage(content=template), MessagesPlaceholder(variable_name="chat_history"),
+              HumanMessagePromptTemplate.from_template("{input}")])
 
 from langchain.chains import LLMChain
+
 
 def send_feedback(run_id, score):
     client.create_feedback(run_id, "user_score", score=score)
 
+
 if "messages" not in st.session_state:
-    st.session_state["messages"] = [AIMessage(content="Welcome! This short course with help you started with LangChain, and will cover LLMs, prompts, output parsers, and LLMChains.Before doing this, you should have a Python environment set up. Do you have that done?")]
+    st.session_state["messages"] = [AIMessage(
+        content="Welcome! This short course with help you started with LangChain, and will cover LLMs, prompts, output parsers, and LLMChains.Before doing this, you should have a Python environment set up. Do you have that done?")]
 
 for msg in st.session_state["messages"]:
     if isinstance(msg, HumanMessage):
@@ -70,12 +73,12 @@ if prompt := st.chat_input():
         model = ChatOpenAI(streaming=True, callbacks=[stream_handler], model="gpt-4")
         chain = LLMChain(prompt=prompt_template, llm=model)
 
-        response = chain({"input":prompt, "chat_history":st.session_state.messages[-20:]}, include_run_info=True)
+        response = chain({"input": prompt, "chat_history": st.session_state.messages[-20:]}, include_run_info=True)
         st.session_state.messages.append(HumanMessage(content=prompt))
         st.session_state.messages.append(AIMessage(content=response[chain.output_key]))
         run_id = response["__run"].run_id
 
-        col_blank, col_text, col1, col2 = st.columns([10, 2,1,1])
+        col_blank, col_text, col1, col2 = st.columns([10, 2, 1, 1])
         with col_text:
             st.text("Feedback:")
 
@@ -84,4 +87,3 @@ if prompt := st.chat_input():
 
         with col2:
             st.button("👎", on_click=send_feedback, args=(run_id, 0))
-
